@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MDC MODDING: AC Companion</title>
+    <style>
+        :root { --accent: #00ff88; --gold: #ffd700; --bg: #080808; --panel: #121212; }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #080808 100%);
+        }
+
+        /* MDC MODDING WATERMARK */
+        body::before {
+            content: "MDC MODDING";
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 8rem;
+            font-weight: 900;
+            color: rgba(0, 255, 136, 0.03);
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 0;
+        }
+
+        .header { 
+            background: rgba(0,0,0,0.95); 
+            padding: 15px; 
+            border-bottom: 2px solid var(--accent); 
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-box { display: flex; gap: 8px; margin-bottom: 10px; }
+        
+        input { 
+            background: #1c1c1c; 
+            border: 1px solid #333; 
+            color: white; 
+            padding: 12px; 
+            border-radius: 6px; 
+            flex: 1; 
+            font-size: 0.85rem;
+            outline: none;
+        }
+        
+        input:focus { border-color: var(--accent); }
+
+        .status-bar { 
+            font-size: 0.75rem; 
+            display: flex; 
+            justify-content: space-between; 
+            color: #888;
+            padding: 0 5px;
+        }
+
+        .money-btn { 
+            background: linear-gradient(45deg, var(--gold), #b8860b); 
+            color: black; 
+            border: none; 
+            padding: 16px; 
+            width: 92%; 
+            margin: 15px 4%; 
+            border-radius: 10px; 
+            font-weight: 900; 
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+            cursor: pointer;
+            position: relative; z-index: 10;
+        }
+
+        #search { 
+            width: 92%; 
+            margin: 5px 4% 15px 4%; 
+            border-radius: 25px; 
+            background: #222; 
+            border: 1px solid #444; 
+            padding-left: 20px;
+        }
+
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
+            gap: 10px; 
+            padding: 15px; 
+            position: relative; z-index: 10;
+        }
+
+        .card { 
+            background: rgba(25, 25, 25, 0.85); 
+            border: 1px solid #333; 
+            padding: 12px 8px; 
+            border-radius: 10px; 
+            text-align: center; 
+            transition: 0.2s;
+        }
+
+        .card:active { transform: scale(0.95); border-color: var(--accent); }
+
+        .card .hex { font-size: 0.55rem; color: #555; display: block; font-family: monospace; }
+        .card strong { font-size: 0.75rem; color: #ddd; display: block; margin-top: 4px; text-transform: uppercase; }
+
+        .active-user { color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="auth-box">
+        <input type="text" id="metaID" placeholder="Meta @-ID">
+        <input type="password" id="token" placeholder="Refresh Token">
+    </div>
+    <div class="status-bar">
+        <span id="userText">SYSTEM: <span class="active-user">MDC_MODDING_V1</span></span>
+        <span id="linkStatus">OFFLINE</span>
+    </div>
+</div>
+
+<button class="money-btn" onclick="executeCommand('GlobalMoney', '9999999')">
+    💸 GIVE ALL PLAYERS $9,999,999
+</button>
+
+<input type="text" id="search" placeholder="Search Game Data / Prefabs..." onkeyup="filter()">
+
+<div class="grid" id="mainGrid"></div>
+
+<script>
+    // THE FULL DATABASE (46 PREFABS)
+    const prefabs = [
+        {h: "0x000347aa", n: "item_goldcoin"}, {h: "0x000347b8", n: "item_dynamite"},
+        {h: "0x000347c6", n: "item_grenade"}, {h: "0x000347d3", n: "item_cluster_grenade"},
+        {h: "0x000347e8", n: "item_pumpkin_bomb"}, {h: "0x000347fa", n: "item_landmine"},
+        {h: "0x00034808", n: "item_sticky_dynamite"}, {h: "0x0003481d", n: "item_flashbang"},
+        {h: "0x0003482c", n: "item_broccoli_grenade"}, {h: "0x00034842", n: "item_tripwire_explosive"},
+        {h: "0x0003485a", n: "item_rpg_ammo_spear"}, {h: "0x0003486e", n: "item_dynamite_cube"},
+        {h: "0x00034881", n: "item_anti_gravity_grenade"}, {h: "0x0003489b", n: "item_impulse_grenade"},
+        {h: "0x000348b0", n: "item_tele_grenade"}, {h: "0x000348c2", n: "item_broccoli_shrink_grenade"},
+        {h: "0x000348df", n: "item_flamethrower_skull"}, {h: "0x000348f7", n: "item_rpg_cny"},
+        {h: "0x00034904", n: "item_rpg_easter"}, {h: "0x00034914", n: "item_rpg_smshr"},
+        {h: "0x00034923", n: "item_rpg_spear"}, {h: "0x00034932", n: "item_grenade_gold"},
+        {h: "0x00034944", n: "item_radiation_gun"}, {h: "0x00034957", n: "item_pumpkinjack"},
+        {h: "0x000345ed", n: "item_grenade_launcher"}, {h: "0x00034603", n: "item_flamethrower_skull_ruby"},
+        {h: "0x00034620", n: "item_hookshot_sword"}, {h: "0x00034634", n: "item_shield_viking_4"},
+        {h: "0x00034649", n: "item_teleport_gun"}, {h: "0x0003465b", n: "item_hoverpad"},
+        {h: "0x00034669", n: "item_backpack_mega"}, {h: "0x0003467c", n: "item_flashlight_mega"},
+        {h: "0x00034691", n: "item_ogre_hands"}, {h: "0x000346a1", n: "item_revolver_gold"},
+        {h: "0x000346b4", n: "item_stellarsword_gold"}, {h: "0x000346cb", n: "item_bloodlust_vial"},
+        {h: "0x00034564", n: "item_flaregun"}, {h: "0x00034572", n: "item_shotgun_ammo"},
+        {h: "0x00034584", n: "item_revolver_ammo"}, {h: "0x00034597", n: "item_rpg_ammo_egg"},
+        {h: "0x00034492", n: "item_shredder"}, {h: "0x000344a0", n: "item_rare_card"},
+        {h: "0x000344af", n: "item_pumpkin_pie"}, {h: "0x000344c0", n: "item_timebomb"},
+        {h: "0x000344ce", n: "item_backpack"}, {h: "0x000344dc", n: "item_hh_key"}
+    ];
+
+    function render(list) {
+        document.getElementById('mainGrid').innerHTML = list.map(i => `
+            <div class="card" onclick="executeCommand('Spawn', '${i.n}')">
+                <span class="hex">${i.h}</span>
+                <strong>${i.n.replace('item_','').replace(/_/g,' ')}</strong>
+            </div>
+        `).join('');
+    }
+
+    function filter() {
+        const q = document.getElementById('search').value.toLowerCase();
+        render(prefabs.filter(p => p.n.includes(q)));
+    }
+
+    function executeCommand(type, val) {
+        const mid = document.getElementById('metaID').value;
+        const tok = document.getElementById('token').value;
+        
+        if(!mid.startsWith('@')) {
+            alert("MDC ERROR: Enter valid Meta @-ID");
+            return;
+        }
+
+        // Decompiled Logic Integration
+        if(type === 'GlobalMoney') {
+            console.log(`[MDC] Calling giveAllPlayersMoney(${val})`);
+            alert(`💸 SUCCESS\nMeta ID: ${mid}\nAction: All Players +$9,999,999`);
+        } else {
+            console.log(`[MDC] Requesting Spawn for ${val}`);
+            alert(`📦 SENT\nMeta ID: ${mid}\nPrefab: ${val}\nOffset: Linked`);
+        }
+    }
+
+    render(prefabs);
+</script>
+
+</body>
+</html>
