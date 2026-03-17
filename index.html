@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VR Tracer Injector</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #drop-zone { width: 400px; height: 200px; border: 2px dashed #3f51b5; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
+        #drop-zone.hover { background: #1a237e; border-color: #7986cb; }
+        .status { margin-top: 20px; color: #81c784; }
+    </style>
+</head>
+<body>
+
+    <div id="drop-zone">
+        <p>Drop VR APK here to inject Tracers</p>
+        <input type="file" id="fileInput" hidden>
+    </div>
+    <div class="status" id="status">Ready</div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const status = document.getElementById('status');
+
+        dropZone.onclick = () => document.getElementById('fileInput').click();
+
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('hover'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('hover');
+
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('hover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.apk')) {
+                uploadFile(file);
+            } else {
+                status.innerText = "Error: Please drop a valid .apk file";
+            }
+        };
+
+        function uploadFile(file) {
+            status.innerText = "Uploading & Patching " + file.name + "...";
+            // This would normally be a fetch() call to a Python backend
+            console.log("Sending to backend for tracer injection...");
+        }
+    </script>
+</body>
+</html>
